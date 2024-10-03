@@ -168,7 +168,7 @@ demo = gr.Interface(
     inference, [
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['Yes', 'No'], type="value", value='aligned', label='Is the input an aligned face image?'),
-        gr.Number(label="Scale factor for the background upsampler. Insert a value between 1 and 4 (including). Applicable only to non-aligned face images.", value=1),
+        gr.Slider(label="Scale factor for the background upsampler. Applicable only to non-aligned face images.", minimum=1, maximum=4, value=2, step=0.1, interactive=True),
         gr.Number(label="Number of flow steps. A higher value should result in better image quality, but will inference will take a longer time.", value=25),
     ], [
         gr.Image(type="numpy", label="Output"),
