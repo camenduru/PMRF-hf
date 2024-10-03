@@ -43,6 +43,18 @@ face_helper_dummy = FaceRestoreHelper(
 os.makedirs('output', exist_ok=True)
 
 
+def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, device):
+    source_dist_samples = pmrf_model.create_source_distribution_samples(x, y, non_noisy_z0)
+    dt = (1.0 / num_flow_steps) * (1.0 - pmrf_model.hparams.eps)
+    x_t_next = source_dist_samples.clone()
+    t_one = torch.ones(x.shape[0], device=device)
+    for i in range(num_flow_steps):
+        num_t = (i / num_flow_steps) * (1.0 - pmrf_model.hparams.eps) + pmrf_model.hparams.eps
+        v_t_next = pmrf_model(x_t=x_t_next, t=t_one * num_t, y=y).to(x_t_next.dtype)
+        x_t_next = x_t_next.clone() + v_t_next * dt
+
+    return x_t_next.clip(0, 1).to(torch.float32)
+
 def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
@@ -63,10 +75,9 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
         try:
-            restored_face = img
-            # dummy_x = torch.zeros_like(cropped_face_t)
-            # output = pmrf.generate_reconstructions(dummy_x, cropped_face_t, None, 25, device)
-            # restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
+            dummy_x = torch.zeros_like(cropped_face_t)
+            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
+            restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
         except RuntimeError as error:
             print(f'\tFailed inference for PMRF: {error}.')
             restored_face = cropped_face
