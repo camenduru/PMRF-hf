@@ -9,7 +9,7 @@ scipy
 tqdm
 lmdb
 pyyaml
-pip install git+https://github.com/XPixelGroup/BasicSR.git@8d56e3a045f9fb3e1d8872f92ee4a4f07f886b0a
+git+https://github.com/XPixelGroup/BasicSR.git@8d56e3a045f9fb3e1d8872f92ee4a4f07f886b0a
 yapf
 dctorch
 einops
