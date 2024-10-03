@@ -1,10 +1,11 @@
+--index-url https://download.pytorch.org/whl/cu118
 torch==2.2.2
+torchvision==0.17.2
 facexlib==0.2.5
 realesrgan==0.2.5
 numpy
 opencv-python
-torchvision
-pytorch-lightning==2.4.0
+pytorch-lightning==2.3.3
 scipy
 tqdm
 lmdb
@@ -16,7 +17,7 @@ einops
 torch-ema==0.3
 huggingface_hub==0.24.6
 -f https://shi-labs.com/natten/wheels/
-natten==0.17.1+torch220cu121
+natten==0.17.1+torch220cu118
 wandb
 timm
 torchmetrics
