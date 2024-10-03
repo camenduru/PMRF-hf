@@ -163,4 +163,5 @@ demo = gr.Interface(
 )
 
 
-demo.queue(max_size=20).launch()
+demo.queue()
+demo.launch(state_session_capacity=15)
