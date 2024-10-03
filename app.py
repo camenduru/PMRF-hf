@@ -1,7 +1,7 @@
 import os
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
-os.environ['K_DIFFUSION_USE_COMPILE'] = "1"
+os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
 import spaces
 import cv2
 import gradio as gr
@@ -30,7 +30,7 @@ half = True if torch.cuda.is_available() else False
 upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=0, tile_pad=10, pre_pad=0, half=half)
 
 pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device)
-pmrf = torch.compile(pmrf, mode="reduce-overhead")
+
 face_helper_dummy = FaceRestoreHelper(
     1,
     face_size=512,
