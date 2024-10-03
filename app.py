@@ -156,7 +156,7 @@ demo = gr.Interface(
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['aligned', 'unaligned'], type="value", value='unaligned', label='Image Alignment'),
         gr.Number(label="Rescaling factor", value=2),
-        gr.Number(label="Number of flow steps", value=25),
+        gr.Number(label="Number of flow steps (a higher value leads to better image quality at the expense of runtime)", value=25),
     ], [
         gr.Image(type="numpy", label="Output (The whole image)"),
         gr.File(label="Download the output image")

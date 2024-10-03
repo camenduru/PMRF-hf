@@ -8,7 +8,8 @@ from torch.nn.functional import mse_loss
 from torch.nn.functional import sigmoid
 from torch.optim import AdamW
 from torch_ema import ExponentialMovingAverage as EMA
-from torchmetrics.image import FrechetInceptionDistance, InceptionScore
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.image.inception import InceptionScore
 from torchvision.transforms.functional import to_pil_image
 from torchvision.utils import save_image
 
