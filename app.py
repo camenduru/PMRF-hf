@@ -56,7 +56,6 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
         face_helper.align_warp_face()
-    return img, img, img
     # face restoration
     for cropped_face in face_helper.cropped_faces:
         # prepare data
@@ -64,9 +63,10 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
         try:
-            dummy_x = torch.zeros_like(cropped_face_t)
-            output = pmrf.generate_reconstructions(dummy_x, cropped_face_t, None, 25, device)
-            restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
+            restored_face = img
+            # dummy_x = torch.zeros_like(cropped_face_t)
+            # output = pmrf.generate_reconstructions(dummy_x, cropped_face_t, None, 25, device)
+            # restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
         except RuntimeError as error:
             print(f'\tFailed inference for PMRF: {error}.')
             restored_face = cropped_face
