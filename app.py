@@ -115,24 +115,22 @@ def inference(img, aligned, scale, num_steps):
             device=device,
             model_rootpath=None)
 
-        try:
-            has_aligned = True if aligned == 'aligned' else False
-            _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                             paste_back=True)
-            if has_aligned:
-                output = restored_aligned[0]
-            else:
-                output = restored_img
-        except RuntimeError as error:
-            print('Error', error)
+        has_aligned = True if aligned == 'aligned' else False
+        _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
+                                                         paste_back=True)
+        if has_aligned:
+            output = restored_aligned[0]
+        else:
+            output = restored_img
 
-        try:
-            if scale != 2:
-                interpolation = cv2.INTER_AREA if scale < 2 else cv2.INTER_LANCZOS4
-                h, w = img.shape[0:2]
-                output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
-        except Exception as error:
-            print('Wrong scale input.', error)
+
+        # try:
+        #     if scale != 2:
+        #         interpolation = cv2.INTER_AREA if scale < 2 else cv2.INTER_LANCZOS4
+        #         h, w = img.shape[0:2]
+        #         output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
+        # except Exception as error:
+        #     print('Wrong scale input.', error)
         if img_mode == 'RGBA':  # RGBA images should be saved in png format
             extension = 'png'
         else:
@@ -154,7 +152,7 @@ demo = gr.Interface(
     inference, [
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['aligned', 'unaligned'], type="value", value='unaligned', label='Image Alignment'),
-        gr.Number(label="Rescaling factor", value=2),
+        gr.Number(label="Rescaling factor (the rescaling factor of the final image)", value=2),
         gr.Number(label="Number of flow steps (a higher value leads to better image quality at the expense of runtime)", value=25),
     ], [
         gr.Image(type="numpy", label="Output (The whole image)"),
