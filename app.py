@@ -44,7 +44,6 @@ os.makedirs('output', exist_ok=True)
 
 
 @torch.inference_mode()
-@spaces.GPU()
 def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
