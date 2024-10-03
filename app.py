@@ -61,20 +61,16 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
 def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
-    if has_aligned:
-        # the input faces are already cropped and aligned
+    if has_aligned:  # the inputs are already aligned
         img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
         face_helper.cropped_faces = [img]
     else:
         face_helper.read_image(img)
-        # get face landmarks for each face
-        num_det_faces = face_helper.get_face_landmarks_5(
-            only_center_face=only_center_face, resize=640, eye_dist_threshold=5
-        )
-        print(f'\tdetect {num_det_faces} faces')
+        face_helper.get_face_landmarks_5(only_center_face=only_center_face, resize=640, eye_dist_threshold=5)
+        # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
+        # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
         face_helper.align_warp_face()
-
     # face restoration
     for cropped_face in face_helper.cropped_faces:
         # prepare data
