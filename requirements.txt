@@ -1,7 +1,7 @@
--f https://download.pytorch.org/whl/cu118
-torch==2.2.1
--f https://download.pytorch.org/whl/cu118
-torchvision==0.17.1
+-f https://download.pytorch.org/whl/cu121
+torch==2.2.2
+-f https://download.pytorch.org/whl/cu121
+torchvision==0.17.2
 realesrgan==0.2.5
 numpy
 facexlib
@@ -22,4 +22,4 @@ timm
 torchmetrics
 torch-fidelity==0.3.0
 -f https://shi-labs.com/natten/wheels/
-natten==0.17.1+torch220cu118
+natten==0.17.1+torch220cu121
