@@ -56,7 +56,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
         face_helper.align_warp_face()
-
+    return img, img, img
     # face restoration
     for cropped_face in face_helper.cropped_faces:
         # prepare data
@@ -68,7 +68,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
             output = pmrf.generate_reconstructions(dummy_x, cropped_face_t, None, 25, device)
             restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
         except RuntimeError as error:
-            print(f'\tFailed inference for RestoreFormer: {error}.')
+            print(f'\tFailed inference for PMRF: {error}.')
             restored_face = cropped_face
 
         restored_face = restored_face.astype('uint8')
@@ -122,13 +122,12 @@ def inference(img, aligned, scale, num_steps):
         model_rootpath=None)
 
     has_aligned = True if aligned == 'Yes' else False
-    # _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-    #                                                  paste_back=True)
-    output = img
-    # if has_aligned:
-    #     output = restored_aligned[0]
-    # else:
-    #     output = restored_img
+    _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
+                                                     paste_back=True)
+    if has_aligned:
+        output = restored_aligned[0]
+    else:
+        output = restored_img
 
 
     # try:
