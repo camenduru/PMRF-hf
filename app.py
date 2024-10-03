@@ -17,12 +17,11 @@ torch.set_grad_enabled(False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if not os.path.exists('pretrained_models'):
-    os.makedirs('pretrained_models')
+os.makedirs('pretrained_models', exist_ok=True)
 realesr_model_path = 'pretrained_models/RealESRGAN_x4plus.pth'
 if not os.path.exists(realesr_model_path):
     os.system(
-        "wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth -O experiments/pretrained_models/RealESRGAN_x4plus.pth")
+        "wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth -O pretrained_models/RealESRGAN_x4plus.pth")
 
 # background enhancer with RealESRGAN
 model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
