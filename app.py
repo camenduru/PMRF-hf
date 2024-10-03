@@ -147,12 +147,18 @@ def inference(img, aligned, scale, num_flow_steps):
 title = "Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration"
 
 description = r"""
-Gradio demo for the blind face image restoration version of Posterior-Mean Rectified Flow (PMRF). Please refer to our project's page: https://pmrf-ml.github.io/.
+Gradio demo for the blind face image restoration version of <a href='https://arxiv.org/abs/2410.00418' target='_blank'><b>Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</b></a>. 
+
+Please refer to our project's page for more details: https://pmrf-ml.github.io/.
+
+---
 
 You may use this demo to enhance the quality of any image which contains faces.
 
 1. If your input image has only one face and it is aligned, please mark "Yes" to the answer below. 
 2. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
+
+<b>NOTE</b>: Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
 """
 
 css = r"""
