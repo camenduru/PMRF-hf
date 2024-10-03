@@ -21,7 +21,6 @@ def rotate_half(x):
     return x.view(*shape, d * r)
 
 
-@flags.compile_wrap
 def apply_rotary_emb(freqs, t, start_index=0, scale=1.0):
     freqs = freqs.to(t)
     rot_dim = freqs.shape[-1]
