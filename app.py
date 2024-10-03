@@ -1,5 +1,6 @@
 import os
-
+if os.getenv('SPACES_ZERO_GPU') == "true":
+    os.environ['SPACES_ZERO_GPU'] = "1"
 import cv2
 import gradio as gr
 import torch
@@ -13,8 +14,7 @@ from lightning_models.mmse_rectified_flow import MMSERectifiedFlow
 
 torch.set_grad_enabled(False)
 
-if os.getenv('SPACES_ZERO_GPU') == "true":
-    os.environ['SPACES_ZERO_GPU'] = "1"
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if not os.path.exists('pretrained_models'):
@@ -89,8 +89,6 @@ def inference(img, aligned, scale):
     if scale > 4:
         scale = 4  # avoid too large scale value
     try:
-
-        extension = os.path.splitext(os.path.basename(str(img)))[1]
         img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
         if len(img.shape) == 3 and img.shape[2] == 4:
             img_mode = 'RGBA'
