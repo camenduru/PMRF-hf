@@ -27,7 +27,7 @@ if not os.path.exists(realesr_model_path):
 # background enhancer with RealESRGAN
 model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
 half = True if torch.cuda.is_available() else False
-upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=0, tile_pad=10, pre_pad=0, half=half)
+upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=400, tile_pad=10, pre_pad=0, half=half)
 
 pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device=device)
 
@@ -112,7 +112,7 @@ def inference(img, aligned, scale, num_flow_steps):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     h, w = img.shape[0:2]
-    if h > 3500 or w > 3500:
+    if h > 4500 or w > 4500:
         print('Image size too large.')
         return None, None
 
@@ -158,7 +158,10 @@ You may use this demo to enhance the quality of any image which contains faces.
 1. If your input image has only one face and it is aligned, please mark "Yes" to the answer below. 
 2. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
 
-<b>NOTE</b>: Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
+<b>NOTEs</b>: 
+
+1. Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
+2. Images that are too large won't work due to memory constraints.
 """
 
 
