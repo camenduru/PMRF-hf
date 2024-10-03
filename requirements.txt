@@ -1,9 +1,10 @@
 --index-url https://download.pytorch.org/whl/cu118
+--extra-index-url=https://pypi.org/simple
 torch==2.2.2
 torchvision==0.17.2
-facexlib
 realesrgan==0.2.5
 numpy
+facexlib
 opencv-python
 pytorch-lightning==2.3.3
 scipy
