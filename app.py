@@ -172,6 +172,7 @@ If you find our work useful, please help to ⭐ our <a href='https://github.com/
 [![GitHub Stars](https://img.shields.io/github/stars/ohayonguy/PMRF?style=social)](https://github.com/ohayonguy/PMRF)
 
 📝 **Citation**
+
 If our work is useful for your research, please consider citing:
 ```bibtex
 @article{ohayon2024pmrf,
@@ -184,10 +185,12 @@ If our work is useful for your research, please consider citing:
 ```
 
 📋 **License**
+
 This project is released under the <a rel="license" href="https://github.com/ohayonguy/PMRF/blob/master/LICENSE">MIT license</a>. 
 Redistribution and use for non-commercial purposes should follow this license.
 
 📧 **Contact**
+
 If you have any questions, please feel free to contact me at <b>guyoep@gmail.com</b>.
 """
 css = r"""
