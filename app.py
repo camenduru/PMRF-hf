@@ -24,17 +24,12 @@ if not os.path.exists(realesr_model_path):
     os.system(
         "wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth -O experiments/pretrained_models/RealESRGAN_x4plus.pth")
 
-pmrf_model_path = 'blind_face_restoration_pmrf.ckpt'
-
 # background enhancer with RealESRGAN
 model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
 half = True if torch.cuda.is_available() else False
 upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=0, tile_pad=10, pre_pad=0, half=half)
 
-pmrf = MMSERectifiedFlow.load_from_checkpoint('./blind_face_restoration_pmrf.ckpt',
-                                              mmse_model_arch='swinir_L',
-                                              mmse_model_ckpt_path=None,
-                                              map_location='cpu').to(device)
+pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device)
 
 os.makedirs('output', exist_ok=True)
 
