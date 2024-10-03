@@ -92,7 +92,7 @@ def linear_geglu(x, weight, bias=None):
     if bias is not None:
         x = x + bias
     x, gate = x.chunk(2, dim=-1)
-    return x.clone() * F.gelu(gate.clone())
+    return x * F.gelu(gate)
 
 
 def rms_norm(x, scale, eps):

@@ -76,8 +76,9 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
         dummy_x = torch.zeros_like(cropped_face_t)
-        output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
-        restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
+        restored_face = tensor2img(output.to(torch.float32).squeeze(0), rgb2bgr=True, min_max=(0, 1))
         # restored_face = cropped_face
 
         restored_face = restored_face.astype('uint8')
