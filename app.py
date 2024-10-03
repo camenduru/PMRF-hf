@@ -167,9 +167,10 @@ You may use this demo to enhance the quality of any image which contains faces.
 
 
 article = r"""
+
 If you find our work useful, please help to ⭐ our <a href='https://github.com/ohayonguy/PMRF' target='_blank'>GitHub repository</a>. Thanks! 
 [![GitHub Stars](https://img.shields.io/github/stars/ohayonguy/PMRF?style=social)](https://github.com/ohayonguy/PMRF)
----
+
 📝 **Citation**
 If our work is useful for your research, please consider citing:
 ```bibtex
@@ -181,9 +182,11 @@ If our work is useful for your research, please consider citing:
   url       = {https://arxiv.org/abs/2410.00418}
 }
 ```
+
 📋 **License**
 This project is released under the <a rel="license" href="https://github.com/ohayonguy/PMRF/blob/master/LICENSE">MIT license</a>. 
 Redistribution and use for non-commercial purposes should follow this license.
+
 📧 **Contact**
 If you have any questions, please feel free to contact me at <b>guyoep@gmail.com</b>.
 """
