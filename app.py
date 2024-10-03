@@ -3,6 +3,7 @@ if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
 import spaces
+from facelib.utils.misc import is_gray
 import cv2
 import gradio as gr
 import torch
@@ -61,16 +62,23 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
 def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
-    if has_aligned:  # the inputs are already aligned
-        img = cv2.resize(img, (512, 512))
+    if has_aligned:
+        # the input faces are already cropped and aligned
+        img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
+        face_helper.is_gray = is_gray(img, threshold=5)
+        if face_helper.is_gray:
+            print('\tgrayscale input: True')
         face_helper.cropped_faces = [img]
     else:
         face_helper.read_image(img)
-        face_helper.get_face_landmarks_5(only_center_face=only_center_face, eye_dist_threshold=5)
-        # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
-        # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
+        # get face landmarks for each face
+        num_det_faces = face_helper.get_face_landmarks_5(
+            only_center_face=only_center_face, resize=640, eye_dist_threshold=5
+        )
+        print(f'\tdetect {num_det_faces} faces')
         # align and warp each face
         face_helper.align_warp_face()
+
     # face restoration
     for cropped_face in face_helper.cropped_faces:
         # prepare data
@@ -96,7 +104,7 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
 
         face_helper.get_inverse_affine(None)
         # paste each restored face to the input image
-        restored_img = face_helper.paste_faces_to_input_image(upsample_img=bg_img)
+        restored_img = face_helper.paste_faces_to_input_image(upsample_img=bg_img, draw_box=False)
         return face_helper.cropped_faces, face_helper.restored_faces, restored_img
     else:
         return face_helper.cropped_faces, face_helper.restored_faces, None
@@ -161,6 +169,28 @@ You may use this demo to enhance the quality of any image which contains faces.
 <b>NOTE</b>: Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
 """
 
+
+article = r"""
+If you find our work useful, please help to ⭐ our <a href='https://github.com/ohayonguy/PMRF' target='_blank'>GitHub repository</a>. Thanks! 
+[![GitHub Stars](https://img.shields.io/github/stars/ohayonguy/PMRF?style=social)](https://github.com/ohayonguy/PMRF)
+---
+📝 **Citation**
+If our work is useful for your research, please consider citing:
+```bibtex
+@article{ohayon2024pmrf,
+  author    = {Guy Ohayon and Tomer Michaeli and Michael Elad},
+  title     = {Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration},
+  journal   = {arXiv preprint arXiv:2410.00418},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2410.00418}
+}
+```
+📋 **License**
+This project is released under the <a rel="license" href="https://github.com/ohayonguy/PMRF/blob/master/LICENSE">MIT license</a>. 
+Redistribution and use for non-commercial purposes should follow this license.
+📧 **Contact**
+If you have any questions, please feel free to contact me at <b>guyoep@gmail.com</b>.
+"""
 css = r"""
 """
 
@@ -175,7 +205,8 @@ demo = gr.Interface(
         gr.File(label="Download the output image")
     ],
     title=title,
-    description=description
+    description=description,
+    article=article,
 )
 
 
