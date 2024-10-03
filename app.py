@@ -122,12 +122,13 @@ def inference(img, aligned, scale, num_steps):
         model_rootpath=None)
 
     has_aligned = True if aligned == 'Yes' else False
-    _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                     paste_back=True)
-    if has_aligned:
-        output = restored_aligned[0]
-    else:
-        output = restored_img
+    # _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
+    #                                                  paste_back=True)
+    output = img
+    # if has_aligned:
+    #     output = restored_aligned[0]
+    # else:
+    #     output = restored_img
 
 
     # try:
