@@ -85,7 +85,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
 
 @torch.inference_mode()
 @spaces.GPU()
-def inference(img, aligned, scale):
+def inference(img, aligned, scale, num_steps):
     if scale > 4:
         scale = 4  # avoid too large scale value
     try:
@@ -133,7 +133,7 @@ def inference(img, aligned, scale):
                 h, w = img.shape[0:2]
                 output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
         except Exception as error:
-            print('wrong scale input.', error)
+            print('Wrong scale input.', error)
         if img_mode == 'RGBA':  # RGBA images should be saved in png format
             extension = 'png'
         else:
@@ -156,8 +156,12 @@ demo = gr.Interface(
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['aligned', 'unaligned'], type="value", value='unaligned', label='Image Alignment'),
         gr.Number(label="Rescaling factor", value=2),
+        gr.Number(label="Number of flow steps", value=25),
     ], [
         gr.Image(type="numpy", label="Output (The whole image)"),
         gr.File(label="Download the output image")
     ],
 )
+
+
+demo.queue(max_size=20).launch()
