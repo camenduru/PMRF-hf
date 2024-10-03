@@ -19,3 +19,5 @@ wandb
 timm
 torchmetrics
 torch-fidelity==0.3.0
+-f https://shi-labs.com/natten/wheels/
+natten==0.17.1+torch240cu121
