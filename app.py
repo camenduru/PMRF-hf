@@ -1,6 +1,7 @@
 import os
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
+import spaces
 import cv2
 import gradio as gr
 import torch
@@ -8,7 +9,6 @@ from basicsr.archs.srvgg_arch import SRVGGNetCompact
 from basicsr.utils import img2tensor, tensor2img
 from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from realesrgan.utils import RealESRGANer
-import spaces
 
 from lightning_models.mmse_rectified_flow import MMSERectifiedFlow
 
