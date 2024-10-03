@@ -94,62 +94,61 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
 def inference(img, aligned, scale, num_steps):
     if scale > 4:
         scale = 4  # avoid too large scale value
-    try:
-        img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
-        if len(img.shape) == 3 and img.shape[2] == 4:
-            img_mode = 'RGBA'
-        elif len(img.shape) == 2:  # for gray inputs
-            img_mode = None
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        else:
-            img_mode = None
+    img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
+    if len(img.shape) == 3 and img.shape[2] == 4:
+        img_mode = 'RGBA'
+    elif len(img.shape) == 2:  # for gray inputs
+        img_mode = None
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    else:
+        img_mode = None
 
-        h, w = img.shape[0:2]
-        if h > 3500 or w > 3500:
-            print('Image size too large.')
-            return None, None
-
-        if h < 300:
-            img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
-
-        face_helper = FaceRestoreHelper(
-            scale,
-            face_size=512,
-            crop_ratio=(1, 1),
-            det_model='retinaface_resnet50',
-            save_ext='png',
-            use_parse=True,
-            device=device,
-            model_rootpath=None)
-
-        has_aligned = True if aligned == 'Yes' else False
-        _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                         paste_back=True)
-        if has_aligned:
-            output = restored_aligned[0]
-        else:
-            output = restored_img
-
-
-        # try:
-        #     if scale != 2:
-        #         interpolation = cv2.INTER_AREA if scale < 2 else cv2.INTER_LANCZOS4
-        #         h, w = img.shape[0:2]
-        #         output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
-        # except Exception as error:
-        #     print('Wrong scale input.', error)
-        if img_mode == 'RGBA':  # RGBA images should be saved in png format
-            extension = 'png'
-        else:
-            extension = 'jpg'
-        save_path = f'output/out.{extension}'
-        cv2.imwrite(save_path, output)
-
-        output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-        return output, save_path
-    except Exception as error:
-        print('global exception', error)
+    h, w = img.shape[0:2]
+    if h > 3500 or w > 3500:
+        print('Image size too large.')
         return None, None
+
+    if h < 300:
+        img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
+
+    face_helper = FaceRestoreHelper(
+        scale,
+        face_size=512,
+        crop_ratio=(1, 1),
+        det_model='retinaface_resnet50',
+        save_ext='png',
+        use_parse=True,
+        device=device,
+        model_rootpath=None)
+
+    has_aligned = True if aligned == 'Yes' else False
+    _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
+                                                     paste_back=True)
+    if has_aligned:
+        output = restored_aligned[0]
+    else:
+        output = restored_img
+
+
+    # try:
+    #     if scale != 2:
+    #         interpolation = cv2.INTER_AREA if scale < 2 else cv2.INTER_LANCZOS4
+    #         h, w = img.shape[0:2]
+    #         output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
+    # except Exception as error:
+    #     print('Wrong scale input.', error)
+    if img_mode == 'RGBA':  # RGBA images should be saved in png format
+        extension = 'png'
+    else:
+        extension = 'jpg'
+    save_path = f'output/out.{extension}'
+    cv2.imwrite(save_path, output)
+
+    output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+    return output, save_path
+    # except Exception as error:
+    #     print('global exception', error)
+    #     return None, None
 
 
 css = r"""
