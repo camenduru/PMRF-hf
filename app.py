@@ -2,6 +2,7 @@ import os
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
+import natten
 import spaces
 import cv2
 import gradio as gr

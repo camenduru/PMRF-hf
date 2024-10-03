@@ -1,7 +1,7 @@
 -f https://download.pytorch.org/whl/cu118
-torch==2.2.2
+torch==2.2.1
 -f https://download.pytorch.org/whl/cu118
-torchvision==0.17.2
+torchvision==0.17.1
 realesrgan==0.2.5
 numpy
 facexlib
