@@ -1,7 +1,7 @@
 --index-url https://download.pytorch.org/whl/cu118
 torch==2.2.2
 torchvision==0.17.2
-facexlib==0.2.5
+facexlib
 realesrgan==0.2.5
 numpy
 opencv-python
