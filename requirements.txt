@@ -15,7 +15,7 @@ dctorch
 einops
 torch-ema==0.3
 huggingface_hub==0.24.5
-natten==0.17.1
+natten==0.17.1+torch220cu121 -f https://shi-labs.com/natten/wheels/
 wandb
 timm
 huggingface_hub==0.24.5
