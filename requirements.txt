@@ -19,4 +19,4 @@ huggingface_hub==0.24.5
 natten==0.17.1+torch220cu121
 wandb
 timm
-huggingface_hub==0.24.5
+torchmetrics
