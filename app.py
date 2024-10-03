@@ -76,14 +76,10 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
-        try:
-            dummy_x = torch.zeros_like(cropped_face_t)
-            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
-            restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
-            print("\tSucceeded PMRF out")
-        except RuntimeError as error:
-            print(f'\tFailed inference for PMRF: {error}.')
-            restored_face = cropped_face
+        dummy_x = torch.zeros_like(cropped_face_t)
+        output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
+        restored_face = tensor2img(output.squeeze(0), rgb2bgr=True, min_max=(0, 1))
+        # restored_face = cropped_face
 
         restored_face = restored_face.astype('uint8')
         face_helper.add_restored_face(restored_face)
