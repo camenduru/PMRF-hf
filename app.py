@@ -58,7 +58,7 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
 
 @torch.inference_mode()
 @spaces.GPU()
-def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_back=True, scale=2):
+def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
     if has_aligned:  # the inputs are already aligned
@@ -79,7 +79,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
 
         dummy_x = torch.zeros_like(cropped_face_t)
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, 25, device)
+            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, num_flow_steps, device)
         restored_face = tensor2img(output.to(torch.float32).squeeze(0), rgb2bgr=True, min_max=(0, 1))
         # restored_face = cropped_face
 
@@ -104,7 +104,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
 
 @torch.inference_mode()
 @spaces.GPU()
-def inference(img, aligned, scale, num_steps):
+def inference(img, aligned, scale, num_flow_steps):
     if scale > 4:
         scale = 4  # avoid too large scale value
     img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
@@ -136,7 +136,7 @@ def inference(img, aligned, scale, num_steps):
 
     has_aligned = True if aligned == 'Yes' else False
     _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                     paste_back=True)
+                                                     paste_back=True, num_flow_steps=num_flow_steps)
     if has_aligned:
         output = restored_aligned[0]
     else:
