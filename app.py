@@ -43,7 +43,6 @@ face_helper_dummy = FaceRestoreHelper(
 os.makedirs('output', exist_ok=True)
 
 
-@torch.inference_mode()
 def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
@@ -91,7 +90,6 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         return face_helper.cropped_faces, face_helper.restored_faces, None
 
 
-@torch.inference_mode()
 @spaces.GPU()
 def inference(img, aligned, scale, num_steps):
     if scale > 4:
@@ -167,8 +165,8 @@ demo = gr.Interface(
         gr.Image(type="numpy", label="Output (The whole image)"),
         gr.File(label="Download the output image")
     ],
-)
+).launch()
 
-
-demo.queue()
-demo.launch(state_session_capacity=15)
+#
+# demo.queue()
+# demo.launch(state_session_capacity=15)
