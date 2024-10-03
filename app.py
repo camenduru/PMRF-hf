@@ -1,6 +1,7 @@
 import os
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
+os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
 import spaces
 import cv2
 import gradio as gr
@@ -170,13 +171,13 @@ demo = gr.Interface(
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['Yes', 'No'], type="value", value='aligned', label='Is the input an aligned face image?'),
         gr.Number(label="Rescaling factor (the rescaling factor of the final image)", value=2),
-        gr.Number(label="Number of flow steps (a higher value leads to better image quality at the expense of runtime)", value=25),
+        gr.Number(label="Number of flow steps. A higher value should result in better image quality, but this comes at the expense of runtime.", value=25),
     ], [
-        gr.Image(type="numpy", label="Output (The whole image)"),
+        gr.Image(type="numpy", label="Output"),
         gr.File(label="Download the output image")
     ],
-).launch()
+)
 
-#
-# demo.queue()
-# demo.launch(state_session_capacity=15)
+
+demo.queue()
+demo.launch(state_session_capacity=15)
