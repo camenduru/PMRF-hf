@@ -14,9 +14,10 @@ yapf
 dctorch
 einops
 torch-ema==0.3
-huggingface_hub==0.24.5
+huggingface_hub==0.24.6
 -f https://shi-labs.com/natten/wheels/
 natten==0.17.1+torch220cu121
 wandb
 timm
 torchmetrics
+torch-fidelity==0.3.0
