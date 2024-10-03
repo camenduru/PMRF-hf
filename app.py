@@ -3,7 +3,6 @@ if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
 import spaces
-from facelib.utils.misc import is_gray
 import cv2
 import gradio as gr
 import torch
@@ -65,9 +64,6 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
     if has_aligned:
         # the input faces are already cropped and aligned
         img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
-        face_helper.is_gray = is_gray(img, threshold=5)
-        if face_helper.is_gray:
-            print('\tgrayscale input: True')
         face_helper.cropped_faces = [img]
     else:
         face_helper.read_image(img)
