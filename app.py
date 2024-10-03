@@ -108,13 +108,8 @@ def inference(img, aligned, scale, num_flow_steps):
     if scale > 4:
         scale = 4  # avoid too large scale value
     img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
-    if len(img.shape) == 3 and img.shape[2] == 4:
-        img_mode = 'RGBA'
-    elif len(img.shape) == 2:  # for gray inputs
-        img_mode = None
+    if len(img.shape) == 2:  # for gray inputs
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    else:
-        img_mode = None
 
     h, w = img.shape[0:2]
     if h > 3500 or w > 3500:
@@ -136,33 +131,24 @@ def inference(img, aligned, scale, num_flow_steps):
 
     has_aligned = True if aligned == 'Yes' else False
     _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                     paste_back=True, num_flow_steps=num_flow_steps)
+                                                     paste_back=True, num_flow_steps=num_flow_steps, scale=scale)
     if has_aligned:
         output = restored_aligned[0]
     else:
         output = restored_img
 
-
-    # try:
-    #     if scale != 2:
-    #         interpolation = cv2.INTER_AREA if scale < 2 else cv2.INTER_LANCZOS4
-    #         h, w = img.shape[0:2]
-    #         output = cv2.resize(output, (int(w * scale / 2), int(h * scale / 2)), interpolation=interpolation)
-    # except Exception as error:
-    #     print('Wrong scale input.', error)
-    if img_mode == 'RGBA':  # RGBA images should be saved in png format
-        extension = 'png'
-    else:
-        extension = 'jpg'
-    save_path = f'output/out.{extension}'
+    save_path = f'output/out.png'
     cv2.imwrite(save_path, output)
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     return output, save_path
-    # except Exception as error:
-    #     print('global exception', error)
-    #     return None, None
 
+
+title = "Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration"
+
+description = r"""
+Gradio demo for Posterior-Mean Rectified Flow (PMRF). Please refer to our project's page: https://pmrf-ml.github.io/.
+"""
 
 css = r"""
 """
@@ -171,12 +157,14 @@ demo = gr.Interface(
     inference, [
         gr.Image(type="filepath", label="Input"),
         gr.Radio(['Yes', 'No'], type="value", value='aligned', label='Is the input an aligned face image?'),
-        gr.Number(label="Rescaling factor (the rescaling factor of the final image)", value=2),
-        gr.Number(label="Number of flow steps. A higher value should result in better image quality, but this comes at the expense of runtime.", value=25),
+        gr.Number(label="Scale factor for the background upsampler. Insert a value between 1 and 4 (including). Applicable only to non-aligned face images.", value=1),
+        gr.Number(label="Number of flow steps. A higher value should result in better image quality, but will inference will take a longer time.", value=25),
     ], [
         gr.Image(type="numpy", label="Output"),
         gr.File(label="Download the output image")
     ],
+    title=title,
+    description=description
 )
 
 
