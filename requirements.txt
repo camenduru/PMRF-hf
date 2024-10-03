@@ -19,4 +19,3 @@ wandb
 timm
 torchmetrics
 torch-fidelity==0.3.0
-natten==0.17.1
