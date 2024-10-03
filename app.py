@@ -30,6 +30,16 @@ upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, ti
 
 pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device)
 
+face_helper_dummy = FaceRestoreHelper(
+    1,
+    face_size=512,
+    crop_ratio=(1, 1),
+    det_model='retinaface_resnet50',
+    save_ext='png',
+    use_parse=True,
+    device=device,
+    model_rootpath=None)
+
 os.makedirs('output', exist_ok=True)
 
 
@@ -115,7 +125,7 @@ def inference(img, aligned, scale, num_steps):
             device=device,
             model_rootpath=None)
 
-        has_aligned = True if aligned == 'aligned' else False
+        has_aligned = True if aligned == 'Yes' else False
         _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
                                                          paste_back=True)
         if has_aligned:
@@ -151,7 +161,7 @@ css = r"""
 demo = gr.Interface(
     inference, [
         gr.Image(type="filepath", label="Input"),
-        gr.Radio(['aligned', 'unaligned'], type="value", value='unaligned', label='Image Alignment'),
+        gr.Radio(['Yes', 'No'], type="value", value='aligned', label='Is the input an aligned face image?'),
         gr.Number(label="Rescaling factor (the rescaling factor of the final image)", value=2),
         gr.Number(label="Number of flow steps (a higher value leads to better image quality at the expense of runtime)", value=25),
     ], [
