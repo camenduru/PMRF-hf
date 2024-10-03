@@ -29,7 +29,7 @@ model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, ups
 half = True if torch.cuda.is_available() else False
 upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=0, tile_pad=10, pre_pad=0, half=half)
 
-pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device).to(torch.bfloat16)
+pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device=device, dtype=torch.bfloat16)
 
 face_helper_dummy = FaceRestoreHelper(
     1,
@@ -56,6 +56,8 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
 
     return x_t_next.clip(0, 1).to(torch.float32)
 
+@torch.inference_mode()
+@spaces.GPU()
 def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_back=True, scale=2):
     face_helper.clean_all()
 
@@ -100,6 +102,7 @@ def enhance_face(img, face_helper, has_aligned, only_center_face=False, paste_ba
         return face_helper.cropped_faces, face_helper.restored_faces, None
 
 
+@torch.inference_mode()
 @spaces.GPU()
 def inference(img, aligned, scale, num_steps):
     if scale > 4:
