@@ -12,7 +12,6 @@ from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.image.inception import InceptionScore
 from torchvision.transforms.functional import to_pil_image
 from torchvision.utils import save_image
-
 from utils.create_arch import create_arch
 from utils.img_utils import create_grid
 from huggingface_hub import PyTorchModelHubMixin
