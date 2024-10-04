@@ -138,24 +138,26 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
         model_rootpath=None)
 
     has_aligned = True if aligned == 'Yes' else False
-    _, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
+    cropped_face, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
                                                      paste_back=True, num_flow_steps=num_flow_steps, scale=scale)
     if has_aligned:
         output = restored_aligned[0]
+        input = cropped_face[0]
     else:
         output = restored_img
+        input = cropped_face
 
     save_path = f'output/out.png'
     cv2.imwrite(save_path, output)
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     h, w = output.shape[0:2]
-    orig_input = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    orig_input = cv2.resize(orig_input, (h, w), interpolation=cv2.INTER_LINEAR)
-    return [[orig_input, output, seed], save_path]
+    input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+    input = cv2.resize(input, (h, w), interpolation=cv2.INTER_LINEAR)
+    return [[input, output, seed], save_path]
 
 intro = """
-<h2 style="font-weight: 1400; text-align: center; margin-bottom: 7px;">Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</h2>
+<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;">Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</h1>
 <h3 style="margin-bottom: 10px; text-align: center;">
     <a href="https://arxiv.org/abs/2410.00418">[Paper]</a>&nbsp;|&nbsp;
     <a href="https://pmrf-ml.github.io/">[Project Page]</a>&nbsp;|&nbsp;
@@ -171,36 +173,13 @@ Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
 You may use this demo to enhance the quality of any image which contains faces.
 
-1. If your input image has only one face and it is aligned, please mark "Yes" to the answer below. 
-2. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
+If your input image has only one face and it is aligned, please mark "Yes" to the answer below. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
 
-*Notes*: 
+*Notes* : 
 
 1. Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
 2. Images that are too large won't work due to memory constraints.
 """
-
-#
-# title = "Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration"
-#
-# description = r"""
-# Gradio demo for the blind face image restoration version of <a href='https://arxiv.org/abs/2410.00418' target='_blank'><b>Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</b></a>.
-#
-# Please refer to our project's page for more details: https://pmrf-ml.github.io/.
-#
-# ---
-#
-# You may use this demo to enhance the quality of any image which contains faces.
-#
-# 1. If your input image has only one face and it is aligned, please mark "Yes" to the answer below.
-# 2. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
-#
-# <b>NOTEs</b>:
-#
-# 1. Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
-# 2. Images that are too large won't work due to memory constraints.
-# """
-
 
 article = r"""
 
@@ -235,23 +214,11 @@ css = """
     margin: 0 auto;
     max-width: 512px;
 }
-#run-button {
-    background-color: #FFA500;  /* Orange */
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 8px;  /* Optional: Makes the button corners rounded */
-}
-#run-button:hover {
-    background-color: #e69500;  /* Darker orange on hover */
-}
 """
 
 
 
-with gr.Blocks(css=css) as demo:
+with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.HTML(intro)
     gr.Markdown(markdown_top)
 
