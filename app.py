@@ -126,6 +126,8 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
 
     if h < 300:
         img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
+        h = h * 2
+        w = w * 2
 
     face_helper = FaceRestoreHelper(
         scale,
@@ -150,7 +152,8 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     orig_input = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    orig_input = cv2.resize(orig_input, (output.shape[0], output.shape[1]), interpolation=cv2.INTER_LINEAR)
+    output = cv2.resize(output, (h, w), interpolation=cv2.INTER_LINEAR)
+    orig_input = cv2.resize(orig_input, (h, w), interpolation=cv2.INTER_LINEAR)
     return [[orig_input, output, seed], save_path]
 
 intro = """
@@ -233,6 +236,18 @@ css = """
 #col-container {
     margin: 0 auto;
     max-width: 512px;
+}
+#run-button {
+    background-color: #FFA500;  /* Orange */
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;  /* Optional: Makes the button corners rounded */
+}
+#run-button:hover {
+    background-color: #e69500;  /* Darker orange on hover */
 }
 """
 
@@ -321,7 +336,7 @@ with gr.Blocks(css=css) as demo:
     #     ],
     # )
 
-
+    gr.Markdown(article)
     gr.on(
         [run_button.click],
         fn=inference,
