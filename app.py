@@ -52,12 +52,10 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
     dt = (1.0 / num_flow_steps) * (1.0 - pmrf_model.hparams.eps)
     x_t_next = source_dist_samples.clone()
     t_one = torch.ones(x.shape[0], device=device)
-    pbar = tqdm(range(num_flow_steps))
-    for i in pbar:
+    for i in tqdm(range(num_flow_steps)):
         num_t = (i / num_flow_steps) * (1.0 - pmrf_model.hparams.eps) + pmrf_model.hparams.eps
         v_t_next = pmrf_model(x_t=x_t_next, t=t_one * num_t, y=y).to(x_t_next.dtype)
         x_t_next = x_t_next.clone() + v_t_next * dt
-        pbar.set_description(f'Flow step {i}')
 
     return x_t_next.clip(0, 1).to(torch.float32)
 
@@ -76,8 +74,9 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
         # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
         face_helper.align_warp_face()
+    gr.Info(f"Identified {len(face_helper.cropped_faces)} faces in the image. The algorithm will enhance the quality of each face.")
     # face restoration
-    for i, cropped_face in enumerate(face_helper.cropped_faces):
+    for i, cropped_face in tqdm(enumerate(face_helper.cropped_faces)):
         # prepare data
         h, w = cropped_face.shape[0], cropped_face.shape[1]
         cropped_face = cv2.resize(cropped_face, (512, 512), interpolation=cv2.INTER_LINEAR)
@@ -114,8 +113,7 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
 def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
               progress=gr.Progress(track_tqdm=True)):
     if img is None:
-        gr.Info("Please upload an image before submitting")
-        return [None, None, None]
+        raise gr.Error("Please upload an image before submitting.")
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
     torch.manual_seed(seed)
@@ -127,8 +125,7 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
 
     h, w = img.shape[0:2]
     if h > 4500 or w > 4500:
-        print('Image size too large.')
-        return None, None
+        raise gr.Error('Image size too large.')
 
     face_helper = FaceRestoreHelper(
         scale,
@@ -172,11 +169,9 @@ You may use this demo to enhance the quality of any image which contains faces.
 
 Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
----
-
 *Notes* : 
 
-1. Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
+1. Our model is designed to restore aligned face images, where there is *only one* face in the image, and the face is centered. Here, however, we incorporate mechanisms that allow restoring the quality of *any* image that contains *any* number of faces. Thus, the resulting quality of such general images is not guaranteed.
 2. Images that are too large won't work due to memory constraints.
 
 ---
@@ -201,8 +196,7 @@ If you find our work useful, please help to ⭐ our <a href='https://github.com/
 
 📋 **License**
 
-This project is released under the <a rel="license" href="https://github.com/ohayonguy/PMRF/blob/master/LICENSE">MIT license</a>. 
-Redistribution and use for non-commercial purposes should follow this license.
+This project is released under the <a rel="license" href="https://github.com/ohayonguy/PMRF/blob/master/LICENSE">MIT license</a>.
 
 📧 **Contact**
 
