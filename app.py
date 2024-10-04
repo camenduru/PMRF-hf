@@ -74,7 +74,13 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
         # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
         face_helper.align_warp_face()
-    gr.Info(f"Identified {len(face_helper.cropped_faces)} faces in the image. The algorithm will enhance the quality of each face.")
+    if len(face_helper.cropped_faces) == 0:
+        raise gr.Error("Could not identify any face in the image.")
+    if len(face_helper.cropped_faces) > 1:
+        gr.Info(f"Identified {len(face_helper.cropped_faces)} faces in the image. The algorithm will enhance the quality of each face.")
+    else:
+        gr.Info(f"Identified one face in the image.")
+
     # face restoration
     for i, cropped_face in tqdm(enumerate(face_helper.cropped_faces)):
         # prepare data
