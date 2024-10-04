@@ -247,7 +247,7 @@ with gr.Blocks(css=css) as demo:
 
     with gr.Row():
         with gr.Column(scale=4):
-            input_im = gr.Image(label="Input Image", type="pil")
+            input_im = gr.Image(label="Input Image", type="filepath")
         with gr.Column(scale=1):
             num_inference_steps = gr.Slider(
                 label="Number of Inference Steps",
