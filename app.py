@@ -1,25 +1,27 @@
+# Some of the implementations below are adopted from
+# https://huggingface.co/spaces/sczhou/CodeFormer and https://huggingface.co/spaces/wzhouxiff/RestoreFormerPlusPlus
 import os
+
+import matplotlib.pyplot as plt
 
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
+
 import spaces
 import cv2
 from tqdm import tqdm
 import gradio as gr
 import random
 import torch
-from basicsr.archs.srvgg_arch import SRVGGNetCompact
+from basicsr.archs.rrdbnet_arch import RRDBNet
 from basicsr.utils import img2tensor, tensor2img
-from gradio_imageslider import ImageSlider
 from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from realesrgan.utils import RealESRGANer
 
 from lightning_models.mmse_rectified_flow import MMSERectifiedFlow
 
-torch.set_grad_enabled(False)
-
-MAX_SEED = 1000000
+MAX_SEED = 10000
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 os.makedirs('pretrained_models', exist_ok=True)
@@ -28,24 +30,41 @@ if not os.path.exists(realesr_model_path):
     os.system(
         "wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth -O pretrained_models/RealESRGAN_x4plus.pth")
 
-# background enhancer with RealESRGAN
-model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
-half = True if torch.cuda.is_available() else False
-upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=400, tile_pad=10, pre_pad=0,
-                         half=half)
+# # background enhancer with RealESRGAN
+# model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
+# half = True if torch.cuda.is_available() else False
+# upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=400, tile_pad=10, pre_pad=0,
+#                          half=half)
 
+
+def set_realesrgan():
+    use_half = False
+    if torch.cuda.is_available(): # set False in CPU/MPS mode
+        no_half_gpu_list = ['1650', '1660'] # set False for GPUs that don't support f16
+        if not True in [gpu in torch.cuda.get_device_name(0) for gpu in no_half_gpu_list]:
+            use_half = True
+
+    model = RRDBNet(
+        num_in_ch=3,
+        num_out_ch=3,
+        num_feat=64,
+        num_block=23,
+        num_grow_ch=32,
+        scale=2,
+    )
+    upsampler = RealESRGANer(
+        scale=2,
+        model_path="https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/RealESRGAN_x2plus.pth",
+        model=model,
+        tile=400,
+        tile_pad=40,
+        pre_pad=0,
+        half=use_half
+    )
+    return upsampler
+
+upsampler = set_realesrgan()
 pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device=device)
-
-face_helper_dummy = FaceRestoreHelper(
-    1,
-    face_size=512,
-    crop_ratio=(1, 1),
-    det_model='retinaface_resnet50',
-    save_ext='png',
-    use_parse=True,
-    device=device,
-    model_rootpath=None)
-
 
 def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, device):
     source_dist_samples = pmrf_model.create_source_distribution_samples(x, y, non_noisy_z0)
@@ -57,58 +76,61 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
         v_t_next = pmrf_model(x_t=x_t_next, t=t_one * num_t, y=y).to(x_t_next.dtype)
         x_t_next = x_t_next.clone() + v_t_next * dt
 
-    return x_t_next.clip(0, 1).to(torch.float32)
+    return x_t_next.clip(0, 1)
 
+
+def resize(img, size):
+    # From https://github.com/sczhou/CodeFormer/blob/master/facelib/utils/face_restoration_helper.py
+    h, w = img.shape[0:2]
+    scale = size / min(h, w)
+    h, w = int(h * scale), int(w * scale)
+    interp = cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR
+    return cv2.resize(img, (w, h), interpolation=interp)
 
 @torch.inference_mode()
 @spaces.GPU()
-def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face=False, paste_back=True, scale=2):
+def enhance_face(img, face_helper, has_aligned, num_flow_steps, scale=2):
     face_helper.clean_all()
-    if has_aligned:  # the inputs are already aligned
+    if has_aligned:  # The inputs are already aligned
         img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
         face_helper.cropped_faces = [img]
     else:
         face_helper.read_image(img)
-        face_helper.get_face_landmarks_5(only_center_face=only_center_face, eye_dist_threshold=5)
-        # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
-        # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
-        # align and warp each face
+        face_helper.input_img = resize(face_helper.input_img, 640)
+        face_helper.get_face_landmarks_5(only_center_face=False, eye_dist_threshold=5)
         face_helper.align_warp_face()
     if len(face_helper.cropped_faces) == 0:
         raise gr.Error("Could not identify any face in the image.")
     if len(face_helper.cropped_faces) > 1:
-        gr.Info(f"Identified {len(face_helper.cropped_faces)} faces in the image. The algorithm will enhance the quality of each face.")
+        gr.Info(f"Identified {len(face_helper.cropped_faces)} "
+                f"faces in the image. The algorithm will enhance the quality of each face.")
     else:
         gr.Info(f"Identified one face in the image.")
 
     # face restoration
     for i, cropped_face in tqdm(enumerate(face_helper.cropped_faces)):
-        # prepare data
-        h, w = cropped_face.shape[0], cropped_face.shape[1]
-        cropped_face = cv2.resize(cropped_face, (512, 512), interpolation=cv2.INTER_LINEAR)
-        # face_helper.cropped_faces[i] = cropped_face
         cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
-        dummy_x = torch.zeros_like(cropped_face_t)
-        output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, num_flow_steps, device)
+        output = generate_reconstructions(pmrf,
+                                          torch.zeros_like(cropped_face_t),
+                                          cropped_face_t,
+                                          None,
+                                          num_flow_steps,
+                                          device)
         restored_face = tensor2img(output.to(torch.float32).squeeze(0), rgb2bgr=True, min_max=(0, 1))
-        restored_face = cv2.resize(restored_face, (h, w), interpolation=cv2.INTER_LINEAR)
-
-        restored_face = restored_face.astype('uint8')
+        restored_face = restored_face.astype("uint8")
         face_helper.add_restored_face(restored_face)
 
-    if not has_aligned and paste_back:
+    if not has_aligned:
         # upsample the background
-        if upsampler is not None:
-            # Now only support RealESRGAN for upsampling background
-            bg_img = upsampler.enhance(img, outscale=scale)[0]
-        else:
-            bg_img = None
-
+        # Now only support RealESRGAN for upsampling background
+        bg_img = upsampler.enhance(img, outscale=scale)[0]
         face_helper.get_inverse_affine(None)
         # paste each restored face to the input image
         restored_img = face_helper.paste_faces_to_input_image(upsample_img=bg_img)
+        print(bg_img.shape, img.shape,restored_img.shape)
+
         return face_helper.cropped_faces, face_helper.restored_faces, restored_img
     else:
         return face_helper.cropped_faces, face_helper.restored_faces, None
@@ -123,12 +145,7 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
     torch.manual_seed(seed)
-    if scale > 4:
-        scale = 4  # avoid too large scale value
-    img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
-    if len(img.shape) == 2:  # for gray inputs
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
+    img = cv2.imread(img, cv2.IMREAD_COLOR)
     h, w = img.shape[0:2]
     if h > 4500 or w > 4500:
         raise gr.Error('Image size too large.')
@@ -143,22 +160,22 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
         device=device,
         model_rootpath=None)
 
-    has_aligned = True if aligned == 'Yes' else False
-    cropped_face, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                                paste_back=True, num_flow_steps=num_flow_steps,
+    has_aligned = aligned
+    cropped_face, restored_faces, restored_img = enhance_face(img,
+                                                                face_helper,
+                                                                has_aligned,
+                                                                num_flow_steps=num_flow_steps,
                                                                 scale=scale)
     if has_aligned:
-        output = restored_aligned[0]
-        # input = cropped_face[0].astype('uint8')
+        output = restored_faces[0]
     else:
         output = restored_img
-        # input = img
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-    # h, w = output.shape[0:2]
-    # input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-    # input = cv2.resize(input, (h, w), interpolation=cv2.INTER_LINEAR)
-    return output
+    for i, restored_face in enumerate(restored_faces):
+        restored_faces[i] = cv2.cvtColor(restored_face, cv2.COLOR_BGR2RGB)
+    torch.cuda.empty_cache()
+    return output, restored_faces
 
 
 intro = """
@@ -177,8 +194,9 @@ Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
 *Notes* : 
 
-1. Our model is designed to restore aligned face images, where there is *only one* face in the image, and the face is centered. Here, however, we incorporate mechanisms that allow restoring the quality of *any* image that contains *any* number of faces. Thus, the resulting quality of such general images is not guaranteed.
-2. Images that are too large won't work due to memory constraints.
+1. Our model is designed to restore aligned face images, where there is *only one* face in the image, and the face is centered and aligned. Here, however, we incorporate mechanisms that allow restoring the quality of *any* image that contains *any* number of faces. Thus, the resulting quality of such general images is not guaranteed.
+2. If the faces in your image are not aligned, make sure that the checkbox "The input is an aligned face image" in *not* marked.
+3. Too large images may result in out-of-memory error.
 
 ---
 """
@@ -216,6 +234,7 @@ css = """
 }
 """
 
+
 with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.HTML(intro)
     gr.Markdown(markdown_top)
@@ -232,7 +251,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
                 value=25,
             )
             upscale_factor = gr.Slider(
-                label="Scale factor for the background upsampler. Applicable only to non-aligned face images.",
+                label="Scale factor. Applicable only to non-aligned face images. This will upscale the entire image.",
                 minimum=1,
                 maximum=4,
                 step=0.1,
@@ -247,13 +266,37 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             )
 
             randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-            aligned = gr.Checkbox(label="The input is an aligned face image", value=False)
+            aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
 
     with gr.Row():
         run_button = gr.Button(value="Submit", variant="primary")
 
     with gr.Row():
         result = gr.Image(label="Output", type="numpy", show_label=True)
+    with gr.Row():
+        gallery = gr.Gallery(label="Restored faces gallery", type="numpy", show_label=True)
+
+    examples = gr.Examples(
+        examples=[
+            [42, False, "examples/01.png", False, 1, 25],
+            [42, False, "examples/03.jpg", False, 2, 25],
+            [42, False, "examples/00000055.png", True, 1, 25],
+            [42, False, "examples/00000085.png", True, 1, 25],
+            [42, False, "examples/00000113.png", True, 1, 25],
+            [42, False, "examples/00000137.png", True, 1, 25],
+        ],
+        fn=inference,
+        inputs=[
+            seed,
+            randomize_seed,
+            input_im,
+            aligned,
+            upscale_factor,
+            num_inference_steps,
+        ],
+        outputs=[result, gallery],
+        cache_examples="lazy",
+    )
 
     gr.Markdown(article)
     gr.on(
@@ -267,8 +310,8 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             upscale_factor,
             num_inference_steps,
         ],
-        outputs=result,
-        show_api=False,
+        outputs=[result, gallery],
+        # show_api=False,
         # show_progress="minimal",
     )
 
