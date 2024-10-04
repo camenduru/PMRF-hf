@@ -126,8 +126,6 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
 
     if h < 300:
         img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
-        h = h * 2
-        w = w * 2
 
     face_helper = FaceRestoreHelper(
         scale,
@@ -151,8 +149,8 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
     cv2.imwrite(save_path, output)
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+    h, w = output.shape[0:2]
     orig_input = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    output = cv2.resize(output, (h, w), interpolation=cv2.INTER_LINEAR)
     orig_input = cv2.resize(orig_input, (h, w), interpolation=cv2.INTER_LINEAR)
     return [[orig_input, output, seed], save_path]
 
@@ -261,7 +259,7 @@ with gr.Blocks(css=css) as demo:
         run_button = gr.Button(value="Run")
 
     with gr.Row():
-        with gr.Column(scale=4):
+        with gr.Column(scale=2):
             input_im = gr.Image(label="Input Image", type="filepath")
         with gr.Column(scale=1):
             num_inference_steps = gr.Slider(
