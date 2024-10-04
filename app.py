@@ -142,10 +142,10 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
                                                      paste_back=True, num_flow_steps=num_flow_steps, scale=scale)
     if has_aligned:
         output = restored_aligned[0]
-        input = cropped_face[0]
+        input = cropped_face[0].astype('uint8')
     else:
         output = restored_img
-        input = cropped_face
+        input = img
 
     save_path = f'output/out.png'
     cv2.imwrite(save_path, output)
@@ -172,8 +172,6 @@ Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 ---
 
 You may use this demo to enhance the quality of any image which contains faces.
-
-If your input image has only one face and it is aligned, please mark "Yes" to the answer below. Otherwise, your image may contain any number of faces (>=1), and the quality of each face will be enhanced separately.
 
 *Notes* : 
 
@@ -223,7 +221,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.Markdown(markdown_top)
 
     with gr.Row():
-        run_button = gr.Button(value="Run")
+        run_button = gr.Button(value="Submit", variant="primary")
 
     with gr.Row():
         with gr.Column(scale=2):
