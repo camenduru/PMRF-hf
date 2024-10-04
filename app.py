@@ -66,7 +66,7 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
         face_helper.cropped_faces = [img]
     else:
         face_helper.read_image(img)
-        face_helper.get_face_landmarks_5(only_center_face=only_center_face, resize=640, eye_dist_threshold=5)
+        face_helper.get_face_landmarks_5(only_center_face=only_center_face, eye_dist_threshold=5)
         # eye_dist_threshold=5: skip faces whose eye distance is smaller than 5 pixels
         # TODO: even with eye_dist_threshold, it will still introduce wrong detections and restorations.
         # align and warp each face
@@ -74,14 +74,18 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
     # face restoration
     for cropped_face in face_helper.cropped_faces:
         # prepare data
+        h, w = cropped_face.shape[0], cropped_face.shape[1]
+        cropped_face = cv2.resize(cropped_face, (512, 512), interpolation=cv2.INTER_LINEAR)
         cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
         dummy_x = torch.zeros_like(cropped_face_t)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, num_flow_steps, device)
+        # with torch.autocast("cuda", dtype=torch.bfloat16):
+        output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, num_flow_steps, device)
         restored_face = tensor2img(output.to(torch.float32).squeeze(0), rgb2bgr=True, min_max=(0, 1))
         # restored_face = cropped_face
+        restored_face = cv2.resize(restored_face, (h, w), interpolation=cv2.INTER_LINEAR)
+
 
         restored_face = restored_face.astype('uint8')
         face_helper.add_restored_face(restored_face)
