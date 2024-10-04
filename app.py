@@ -269,12 +269,19 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
 
     with gr.Row():
-        run_button = gr.Button(value="Submit", variant="primary")
+        with gr.Column(scale=1):
+            run_button = gr.Button(value="Submit", variant="primary")
+        with gr.Column(scale=1):
+            clear_button = gr.ClearButton(value="Clear")
 
     with gr.Row():
         result = gr.Image(label="Output", type="numpy", show_label=True)
     with gr.Row():
         gallery = gr.Gallery(label="Restored faces gallery", type="numpy", show_label=True)
+
+    clear_button.add(input_im)
+    clear_button.add(result)
+    clear_button.add(gallery)
 
     examples = gr.Examples(
         examples=[
