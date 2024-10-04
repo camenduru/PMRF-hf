@@ -10,7 +10,6 @@ import torch
 from basicsr.archs.srvgg_arch import SRVGGNetCompact
 from basicsr.utils import img2tensor, tensor2img
 from gradio_imageslider import ImageSlider
-from pytorch_lightning.utilities.seed import seed_everything
 from facexlib.utils.face_restoration_helper import FaceRestoreHelper
 from realesrgan.utils import RealESRGANer
 
@@ -113,7 +112,7 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
 def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
-    seed_everything(seed)
+    torch.manual_seed(seed)
     if scale > 4:
         scale = 4  # avoid too large scale value
     img = cv2.imread(img, cv2.IMREAD_UNCHANGED)
