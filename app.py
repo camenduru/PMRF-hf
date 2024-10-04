@@ -101,11 +101,6 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, scale=2):
         face_helper.align_warp_face()
     if len(face_helper.cropped_faces) == 0:
         raise gr.Error("Could not identify any face in the image.")
-    if len(face_helper.cropped_faces) > 1:
-        gr.Info(f"Identified {len(face_helper.cropped_faces)} "
-                f"faces in the image. The algorithm will enhance the quality of each face.")
-    else:
-        gr.Info(f"Identified one face in the image.")
 
     # face restoration
     for i, cropped_face in tqdm(enumerate(face_helper.cropped_faces)):
