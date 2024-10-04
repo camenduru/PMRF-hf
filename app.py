@@ -5,6 +5,7 @@ if os.getenv('SPACES_ZERO_GPU') == "true":
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
 import spaces
 import cv2
+from tqdm import tqdm
 import gradio as gr
 import random
 import torch
@@ -51,10 +52,12 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
     dt = (1.0 / num_flow_steps) * (1.0 - pmrf_model.hparams.eps)
     x_t_next = source_dist_samples.clone()
     t_one = torch.ones(x.shape[0], device=device)
-    for i in range(num_flow_steps):
+    pbar = tqdm(range(num_flow_steps))
+    for i in pbar:
         num_t = (i / num_flow_steps) * (1.0 - pmrf_model.hparams.eps) + pmrf_model.hparams.eps
         v_t_next = pmrf_model(x_t=x_t_next, t=t_one * num_t, y=y).to(x_t_next.dtype)
         x_t_next = x_t_next.clone() + v_t_next * dt
+        pbar.set_description(f'Flow step {i}')
 
     return x_t_next.clip(0, 1).to(torch.float32)
 
@@ -78,7 +81,7 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
         # prepare data
         h, w = cropped_face.shape[0], cropped_face.shape[1]
         cropped_face = cv2.resize(cropped_face, (512, 512), interpolation=cv2.INTER_LINEAR)
-        face_helper.cropped_faces[i] = cropped_face
+        # face_helper.cropped_faces[i] = cropped_face
         cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
@@ -108,7 +111,11 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
 
 @torch.inference_mode()
 @spaces.GPU()
-def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
+def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
+              progress=gr.Progress(track_tqdm=True)):
+    if img is None:
+        gr.Info("Please upload an image before submitting")
+        return [None, None, None]
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
     torch.manual_seed(seed)
@@ -139,16 +146,16 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
                                                                 scale=scale)
     if has_aligned:
         output = restored_aligned[0]
-        input = cropped_face[0].astype('uint8')
+        # input = cropped_face[0].astype('uint8')
     else:
         output = restored_img
-        input = img
+        # input = img
 
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-    h, w = output.shape[0:2]
-    input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-    input = cv2.resize(input, (h, w), interpolation=cv2.INTER_LINEAR)
-    return [input, output, seed]
+    # h, w = output.shape[0:2]
+    # input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
+    # input = cv2.resize(input, (h, w), interpolation=cv2.INTER_LINEAR)
+    return output
 
 
 intro = """
@@ -215,7 +222,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
 
     with gr.Row():
         with gr.Column(scale=2):
-            input_im = gr.Image(label="Input Image", type="filepath")
+            input_im = gr.Image(label="Input", type="filepath", show_label=True)
         with gr.Column(scale=1):
             num_inference_steps = gr.Slider(
                 label="Number of Inference Steps",
@@ -246,7 +253,7 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
         run_button = gr.Button(value="Submit", variant="primary")
 
     with gr.Row():
-        result = ImageSlider(label="Input / Output", type="numpy", interactive=True, show_label=True)
+        result = gr.Image(label="Output", type="numpy", show_label=True)
 
     gr.Markdown(article)
     gr.on(
@@ -266,4 +273,4 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     )
 
 demo.queue()
-demo.launch(state_session_capacity=15, show_api=False)
+demo.launch(state_session_capacity=15)
