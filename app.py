@@ -1,4 +1,5 @@
 import os
+
 if os.getenv('SPACES_ZERO_GPU') == "true":
     os.environ['SPACES_ZERO_GPU'] = "1"
 os.environ['K_DIFFUSION_USE_COMPILE'] = "0"
@@ -29,7 +30,8 @@ if not os.path.exists(realesr_model_path):
 # background enhancer with RealESRGAN
 model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
 half = True if torch.cuda.is_available() else False
-upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=400, tile_pad=10, pre_pad=0, half=half)
+upsampler = RealESRGANer(scale=4, model_path=realesr_model_path, model=model, tile=400, tile_pad=10, pre_pad=0,
+                         half=half)
 
 pmrf = MMSERectifiedFlow.from_pretrained('ohayonguy/PMRF_blind_face_image_restoration').to(device=device)
 
@@ -43,8 +45,6 @@ face_helper_dummy = FaceRestoreHelper(
     device=device,
     model_rootpath=None)
 
-os.makedirs('output', exist_ok=True)
-
 
 def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, device):
     source_dist_samples = pmrf_model.create_source_distribution_samples(x, y, non_noisy_z0)
@@ -57,6 +57,7 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
         x_t_next = x_t_next.clone() + v_t_next * dt
 
     return x_t_next.clip(0, 1).to(torch.float32)
+
 
 @torch.inference_mode()
 @spaces.GPU()
@@ -73,20 +74,18 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, only_center_face
         # align and warp each face
         face_helper.align_warp_face()
     # face restoration
-    for cropped_face in face_helper.cropped_faces:
+    for i, cropped_face in enumerate(face_helper.cropped_faces):
         # prepare data
         h, w = cropped_face.shape[0], cropped_face.shape[1]
         cropped_face = cv2.resize(cropped_face, (512, 512), interpolation=cv2.INTER_LINEAR)
+        face_helper.cropped_faces[i] = cropped_face
         cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
         cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
         dummy_x = torch.zeros_like(cropped_face_t)
-        # with torch.autocast("cuda", dtype=torch.bfloat16):
         output = generate_reconstructions(pmrf, dummy_x, cropped_face_t, None, num_flow_steps, device)
         restored_face = tensor2img(output.to(torch.float32).squeeze(0), rgb2bgr=True, min_max=(0, 1))
-        # restored_face = cropped_face
         restored_face = cv2.resize(restored_face, (h, w), interpolation=cv2.INTER_LINEAR)
-
 
         restored_face = restored_face.astype('uint8')
         face_helper.add_restored_face(restored_face)
@@ -124,9 +123,6 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
         print('Image size too large.')
         return None, None
 
-    if h < 300:
-        img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
-
     face_helper = FaceRestoreHelper(
         scale,
         face_size=512,
@@ -139,7 +135,8 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
 
     has_aligned = True if aligned == 'Yes' else False
     cropped_face, restored_aligned, restored_img = enhance_face(img, face_helper, has_aligned, only_center_face=False,
-                                                     paste_back=True, num_flow_steps=num_flow_steps, scale=scale)
+                                                                paste_back=True, num_flow_steps=num_flow_steps,
+                                                                scale=scale)
     if has_aligned:
         output = restored_aligned[0]
         input = cropped_face[0].astype('uint8')
@@ -147,14 +144,12 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps):
         output = restored_img
         input = img
 
-    save_path = f'output/out.png'
-    cv2.imwrite(save_path, output)
-
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     h, w = output.shape[0:2]
     input = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
     input = cv2.resize(input, (h, w), interpolation=cv2.INTER_LINEAR)
-    return [[input, output, seed], save_path]
+    return [input, output, seed]
+
 
 intro = """
 <h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;">Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</h1>
@@ -166,17 +161,18 @@ intro = """
 """
 markdown_top = """
 Gradio demo for the blind face image restoration version of [Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration](https://arxiv.org/abs/2410.00418). 
+You may use this demo to enhance the quality of any image which contains faces.
 
 Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
 ---
 
-You may use this demo to enhance the quality of any image which contains faces.
-
 *Notes* : 
 
 1. Our model is designed to restore aligned face images, but here we incorporate mechanisms that allow restoring the quality of any image that contains any number of faces. Thus, the resulting quality of such general images is not guaranteed.
 2. Images that are too large won't work due to memory constraints.
+
+---
 """
 
 article = r"""
@@ -186,7 +182,6 @@ If you find our work useful, please help to ⭐ our <a href='https://github.com/
 
 📝 **Citation**
 
-If our work is useful for your research, please consider citing:
 ```bibtex
 @article{ohayon2024pmrf,
   author    = {Guy Ohayon and Tomer Michaeli and Michael Elad},
@@ -214,14 +209,9 @@ css = """
 }
 """
 
-
-
 with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.HTML(intro)
     gr.Markdown(markdown_top)
-
-    with gr.Row():
-        run_button = gr.Button(value="Submit", variant="primary")
 
     with gr.Row():
         with gr.Column(scale=2):
@@ -250,54 +240,13 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             )
 
             randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-            aligned = gr.Checkbox(label="The input is an aligned face image", value=True)
+            aligned = gr.Checkbox(label="The input is an aligned face image", value=False)
 
     with gr.Row():
-        result = ImageSlider(label="Input / Output", type="numpy", interactive=True)
+        run_button = gr.Button(value="Submit", variant="primary")
+
     with gr.Row():
-        file = gr.File(label="Download the output image")
-
-    # examples = gr.Examples(
-    #     examples=[
-    #     #    [42, False, "examples/image_1.jpg", 28, 4, 0.6],
-    #     #     [42, False, "examples/image_2.jpg", 28, 4, 0.6],
-    #     #    [42, False, "examples/image_3.jpg", 28, 4, 0.6],
-    #     #     [42, False, "examples/image_4.jpg", 28, 4, 0.6],
-    #     #    [42, False, "examples/image_5.jpg", 28, 4, 0.6],
-    #     #    [42, False, "examples/image_6.jpg", 28, 4, 0.6],
-    #     ],
-    #     inputs=[
-    #         seed,
-    #         randomize_seed,
-    #         input_im,
-    #         num_inference_steps,
-    #         upscale_factor,
-    #         controlnet_conditioning_scale,
-    #     ],
-    #     fn=infer,
-    #     outputs=result,
-    #     cache_examples="lazy",
-    # )
-
-    # examples = gr.Examples(
-    #     examples=[
-    #         #[42, False, "examples/image_1.jpg", 28, 4, 0.6],
-    #         [42, False, "examples/image_2.jpg", 28, 4, 0.6],
-    #         #[42, False, "examples/image_3.jpg", 28, 4, 0.6],
-    #         #[42, False, "examples/image_4.jpg", 28, 4, 0.6],
-    #         [42, False, "examples/image_5.jpg", 28, 4, 0.6],
-    #         [42, False, "examples/image_6.jpg", 28, 4, 0.6],
-    #         [42, False, "examples/image_7.jpg", 28, 4, 0.6],
-    #     ],
-    #     inputs=[
-    #         seed,
-    #         randomize_seed,
-    #         input_im,
-    #         num_inference_steps,
-    #         upscale_factor,
-    #         controlnet_conditioning_scale,
-    #     ],
-    # )
+        result = ImageSlider(label="Input / Output", type="numpy", interactive=True, show_label=True)
 
     gr.Markdown(article)
     gr.on(
@@ -311,27 +260,10 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             upscale_factor,
             num_inference_steps,
         ],
-        outputs=[result, file],
+        outputs=result,
         show_api=False,
         # show_progress="minimal",
     )
 
-
-# demo = gr.Interface(
-#     inference, [
-#         gr.Image(type="filepath", label="Input"),
-#         gr.Radio(['Yes', 'No'], type="value", value='aligned', label='Is the input an aligned face image?'),
-#         gr.Slider(label="Scale factor for the background upsampler. Applicable only to non-aligned face images.", minimum=1, maximum=4, value=2, step=0.1, interactive=True),
-#         gr.Number(label="Number of flow steps. A higher value should result in better image quality, but will inference will take a longer time.", value=25),
-#     ], [
-#         gr.ImageSlider(type="numpy", label="Input / Output", interactive=True),
-#         gr.File(label="Download the output image")
-#     ],
-#     title=title,
-#     description=description,
-#     article=article,
-# )
-
-
 demo.queue()
-demo.launch(state_session_capacity=15, show_api=False, share=False)
+demo.launch(state_session_capacity=15, show_api=False)
