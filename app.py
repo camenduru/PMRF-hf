@@ -101,6 +101,8 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, scale=2):
         face_helper.align_warp_face()
     if len(face_helper.cropped_faces) == 0:
         raise gr.Error("Could not identify any face in the image.")
+    if has_aligned and len(face_helper.cropped_faces) > 1:
+        raise gr.Error("You marked that the input image is aligned, but multiple faces were detected.")
 
     # face restoration
     for i, cropped_face in tqdm(enumerate(face_helper.cropped_faces)):
@@ -170,7 +172,7 @@ def inference(seed, randomize_seed, img, aligned, scale, num_flow_steps,
     for i, restored_face in enumerate(restored_faces):
         restored_faces[i] = cv2.cvtColor(restored_face, cv2.COLOR_BGR2RGB)
     torch.cuda.empty_cache()
-    return output, restored_faces
+    return output, restored_faces if len(restored_faces) > 1 else None
 
 
 intro = """
