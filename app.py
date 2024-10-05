@@ -149,11 +149,11 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, scale=2):
 @spaces.GPU()
 def inference(
     img,
-    seed,
     randomize_seed,
     aligned,
     scale,
     num_flow_steps,
+    seed,
     progress=gr.Progress(track_tqdm=True),
 ):
     if img is None:
@@ -250,7 +250,6 @@ demo = gr.Interface(
     inference,
     [
         gr.Image(label="Input", type="filepath", show_label=True),
-        gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1),
         gr.Checkbox(label="Randomize seed", value=True),
         gr.Checkbox(label="The input is an aligned face image", value=False),
         gr.Slider(
@@ -269,6 +268,7 @@ demo = gr.Interface(
             value=25,
             scale=1,
         ),
+        gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1),
     ],
     [
         gr.Image(label="Output", type="numpy", show_label=True, format="png"),
@@ -280,12 +280,12 @@ demo = gr.Interface(
     description=intro,
     article=article,
     examples=[
-        ["examples/01.png", 42, False, False, 1, 25],
-        ["examples/03.jpg", 42, False, False, 2, 25],
-        ["examples/00000055.png", 42, False, True, 1, 25],
-        ["examples/00000085.png", 42, False, True, 1, 25],
-        ["examples/00000113.png", 42, False, True, 1, 25],
-        ["examples/00000137.png", 42, False, True, 1, 25],
+        ["examples/01.png", False, False, 1, 25, 42],
+        ["examples/03.jpg", False, False, 2, 25, 42],
+        ["examples/00000055.png", False, True, 1, 25, 42],
+        ["examples/00000085.png", False, True, 1, 25, 42],
+        ["examples/00000113.png", False, True, 1, 25, 42],
+        ["examples/00000137.png", False, True, 1, 25, 42],
     ],
     theme=gr.themes.Soft(),
 )
