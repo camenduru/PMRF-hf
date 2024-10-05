@@ -260,24 +260,31 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
             result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
     with gr.Row():
         with gr.Column(scale=1):
-            num_inference_steps = gr.Slider(
-                label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25,
-            )
-            upscale_factor = gr.Slider(
-                label="Scale factor. Applicable only to non-aligned face images. This will upscale the entire image.",
-                minimum=1,
-                maximum=4,
-                step=0.1,
-                value=1,
-            )
-            seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42)
-
-            randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-            aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
-            with gr.Column(scale=1):
-                run_button = gr.Button(value="Submit", variant="primary")
-            with gr.Column(scale=1):
-                clear_button = gr.ClearButton(value="Clear")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    num_inference_steps = gr.Slider(
+                        label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25,
+                    )
+                with gr.Column(scale=1):
+                    upscale_factor = gr.Slider(
+                        label="Scale factor. Applicable only to non-aligned face images. This will upscale the entire image.",
+                        minimum=1,
+                        maximum=4,
+                        step=0.1,
+                        value=1,
+                    )
+                with gr.Column(scale=1):
+                    seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42)
+            with gr.Row():
+                with gr.Column(scale=1):
+                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+                with gr.Column(scale=1):
+                    aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
+            with gr.Row():
+                with gr.Column(scale=1):
+                    run_button = gr.Button(value="Submit", variant="primary")
+                with gr.Column(scale=1):
+                    clear_button = gr.ClearButton(value="Clear")
 
         with gr.Column(scale=1):
             gallery = gr.Gallery(
