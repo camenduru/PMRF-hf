@@ -261,6 +261,11 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
+                with gr.Column(scale=1):
+                    run_button = gr.Button(value="Submit", variant="primary")
+                with gr.Column(scale=1):
+                    clear_button = gr.ClearButton(value="Clear")
+            with gr.Row():
                 num_inference_steps = gr.Slider(
                     label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25, scale=1
                 )
@@ -273,11 +278,6 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
                     scale=1
                 )
                 seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1)
-            with gr.Row():
-                with gr.Column(scale=1):
-                    run_button = gr.Button(value="Submit", variant="primary")
-                with gr.Column(scale=1):
-                    clear_button = gr.ClearButton(value="Clear")
             with gr.Row():
                 randomize_seed = gr.Checkbox(label="Randomize seed", value=True, scale=1)
                 aligned = gr.Checkbox(label="The input is an aligned face image", value=False, scale=1)
