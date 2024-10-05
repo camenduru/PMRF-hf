@@ -193,15 +193,14 @@ def inference(
     return output, restored_faces if len(restored_faces) > 1 else None
 
 
+title = "Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration"
 intro = """
-<h1 style="font-weight: 1400; text-align: center; margin-bottom: 7px;">Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration</h1>
 <h3 style="margin-bottom: 10px; text-align: center;">
     <a href="https://arxiv.org/abs/2410.00418">[Paper]</a>&nbsp;|&nbsp;
     <a href="https://pmrf-ml.github.io/">[Project Page]</a>&nbsp;|&nbsp;
     <a href="https://github.com/ohayonguy/PMRF">[Code]</a>
 </h3>
-"""
-markdown_top = """
+
 Gradio demo for the blind face image restoration version of [Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration](https://arxiv.org/abs/2410.00418). 
 You may use this demo to enhance the quality of any image which contains faces.
 
@@ -212,8 +211,6 @@ Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 1. Our model is designed to restore aligned face images, where there is *only one* face in the image, and the face is centered and aligned. Here, however, we incorporate mechanisms that allow restoring the quality of *any* image that contains *any* number of faces. Thus, the resulting quality of such general images is not guaranteed.
 2. If the faces in your image are not aligned, make sure that the checkbox "The input is an aligned face image" in *not* marked.
 3. Too large images may result in out-of-memory error.
-
----
 """
 
 article = r"""
@@ -249,85 +246,49 @@ css = """
 }
 """
 
-with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
-    gr.HTML(intro)
-    gr.Markdown(markdown_top)
-
-    with gr.Column(scale=1):
-        with gr.Row():
-            input_im = gr.Image(label="Input", type="filepath", show_label=True)
-        with gr.Row():
-            num_inference_steps = gr.Slider(
-                label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25, scale=1
-            )
-            upscale_factor = gr.Slider(
-                label="Scale factor (applicable to non-aligned face images)",
-                minimum=1,
-                maximum=4,
-                step=0.1,
-                value=1,
-                scale=1,
-            )
-            seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1)
-            randomize_seed = gr.Checkbox(label="Randomize seed", value=True, scale=1)
-            aligned = gr.Checkbox(label="The input is an aligned face image", value=False, scale=1)
-        with gr.Row():
-            with gr.Column(scale=1):
-                run_button = gr.Button(value="Submit", variant="primary")
-            with gr.Column(scale=1):
-                clear_button = gr.ClearButton(value="Clear")
-
-    with gr.Column(scale=1):
-        with gr.Row():
-            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
-        with gr.Row():
-            gallery = gr.Gallery(
-                label="Restored faces gallery", type="numpy", show_label=True, format="png"
-            )
-
-    clear_button.add(input_im)
-    clear_button.add(result)
-    clear_button.add(gallery)
-
-    with gr.Row():
-        examples = gr.Examples(
-            examples=[
-                [42, False, "examples/01.png", False, 1, 25],
-                [42, False, "examples/03.jpg", False, 2, 25],
-                [42, False, "examples/00000055.png", True, 1, 25],
-                [42, False, "examples/00000085.png", True, 1, 25],
-                [42, False, "examples/00000113.png", True, 1, 25],
-                [42, False, "examples/00000137.png", True, 1, 25],
-            ],
-            fn=inference,
-            inputs=[
-                seed,
-                randomize_seed,
-                input_im,
-                aligned,
-                upscale_factor,
-                num_inference_steps,
-            ],
-            outputs=[result, gallery],
-            cache_examples="lazy",
-        )
-
-    gr.Markdown(article)
-    gr.on(
-        [run_button.click],
-        fn=inference,
-        inputs=[
-            seed,
-            randomize_seed,
-            input_im,
-            aligned,
-            upscale_factor,
-            num_inference_steps,
-        ],
-        outputs=[result, gallery],
-        # show_api=False,
-        # show_progress="minimal",
-    )
+demo = gr.Interface(
+    inference,
+    [
+        gr.Image(label="Input", type="filepath", show_label=True),
+        gr.Checkbox(label="Randomize seed", value=True),
+        gr.Checkbox(label="The input is an aligned face image", value=False),
+        gr.Slider(
+            label="Number of Inference Steps",
+            minimum=1,
+            maximum=200,
+            step=1,
+            value=25,
+            scale=1,
+        ),
+        gr.Slider(
+            label="Scale factor (applicable to non-aligned face images)",
+            minimum=1,
+            maximum=4,
+            step=0.1,
+            value=1,
+            scale=1,
+        ),
+        gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1),
+    ],
+    [
+        gr.Image(label="Output", type="numpy", show_label=True, format="png"),
+        gr.Gallery(
+            label="Restored faces gallery", type="numpy", show_label=True, format="png",
+        ),
+    ],
+    title=title,
+    description=intro,
+    article=article,
+    examples=[
+        [42, False, "examples/01.png", False, 1, 25],
+        [42, False, "examples/03.jpg", False, 2, 25],
+        [42, False, "examples/00000055.png", True, 1, 25],
+        [42, False, "examples/00000085.png", True, 1, 25],
+        [42, False, "examples/00000113.png", True, 1, 25],
+        [42, False, "examples/00000137.png", True, 1, 25],
+    ],
+    theme=gr.themes.Soft(),
+)
 
 demo.queue()
 demo.launch(state_session_capacity=15)
