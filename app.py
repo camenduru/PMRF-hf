@@ -255,16 +255,17 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
 
     with gr.Row():
         with gr.Column(scale=1):
-            input_im = gr.Image(label="Input", type="filepath", show_label=True)
-        with gr.Column(scale=1):
-            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
-    with gr.Row():
-        with gr.Column(scale=1):
+            with gr.Row():
+                input_im = gr.Image(label="Input", type="filepath", show_label=True)
             with gr.Row():
                 with gr.Column(scale=1):
                     run_button = gr.Button(value="Submit", variant="primary")
                 with gr.Column(scale=1):
                     clear_button = gr.ClearButton(value="Clear")
+        with gr.Column(scale=1):
+            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
+    with gr.Row():
+        with gr.Column(scale=1):
             with gr.Row():
                 num_inference_steps = gr.Slider(
                     label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25, scale=1
