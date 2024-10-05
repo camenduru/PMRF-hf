@@ -280,12 +280,12 @@ demo = gr.Interface(
     description=intro,
     article=article,
     examples=[
-        [42, False, "examples/01.png", False, 1, 25],
-        [42, False, "examples/03.jpg", False, 2, 25],
-        [42, False, "examples/00000055.png", True, 1, 25],
-        [42, False, "examples/00000085.png", True, 1, 25],
-        [42, False, "examples/00000113.png", True, 1, 25],
-        [42, False, "examples/00000137.png", True, 1, 25],
+        ["examples/01.png", 42, False, False, 1, 25],
+        ["examples/03.jpg", 42, False, False, 2, 25],
+        ["examples/00000055.png", 42, False, True, 1, 25],
+        ["examples/00000085.png", 42, False, True, 1, 25],
+        ["examples/00000113.png", 42, False, True, 1, 25],
+        ["examples/00000137.png", 42, False, True, 1, 25],
     ],
     theme=gr.themes.Soft(),
 )
