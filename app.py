@@ -274,9 +274,10 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
 
             randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
             aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
-
-            run_button = gr.Button(value="Submit", variant="primary", scale=1)
-            clear_button = gr.ClearButton(value="Clear", scale=1)
+            with gr.Column(scale=1):
+                run_button = gr.Button(value="Submit", variant="primary")
+            with gr.Column(scale=1):
+                clear_button = gr.ClearButton(value="Clear")
 
         with gr.Column(scale=1):
             gallery = gr.Gallery(
