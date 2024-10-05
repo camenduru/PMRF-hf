@@ -253,10 +253,13 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.HTML(intro)
     gr.Markdown(markdown_top)
 
-    with gr.Column(scale=1):
-        with gr.Row():
+    with gr.Row():
+        with gr.Column(scale=1):
             input_im = gr.Image(label="Input", type="filepath", show_label=True)
-        with gr.Row():
+        with gr.Column(scale=1):
+            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
+    with gr.Row():
+        with gr.Column(scale=1):
             num_inference_steps = gr.Slider(
                 label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25,
             )
@@ -268,18 +271,14 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
                 value=1,
             )
             seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42)
-            
+
             randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
             aligned = gr.Checkbox(label="The input is an aligned face image.", value=False)
-        with gr.Row():
-            with gr.Column(scale=1):
-                run_button = gr.Button(value="Submit", variant="primary")
-            with gr.Column(scale=1):
-                clear_button = gr.ClearButton(value="Clear")
-    with gr.Column(scale=1):
-        with gr.Row():
-            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
-        with gr.Row():
+
+            run_button = gr.Button(value="Submit", variant="primary", scale=1)
+            clear_button = gr.ClearButton(value="Clear", scale=1)
+
+        with gr.Column(scale=1):
             gallery = gr.Gallery(
                 label="Restored faces gallery", type="numpy", show_label=True, format="png"
             )
