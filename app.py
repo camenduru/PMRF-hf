@@ -253,37 +253,34 @@ with gr.Blocks(css=css, theme=gr.themes.Soft()) as demo:
     gr.HTML(intro)
     gr.Markdown(markdown_top)
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            with gr.Row():
-                input_im = gr.Image(label="Input", type="filepath", show_label=True)
-            with gr.Row():
-                with gr.Column(scale=1):
-                    run_button = gr.Button(value="Submit", variant="primary")
-                with gr.Column(scale=1):
-                    clear_button = gr.ClearButton(value="Clear")
-        with gr.Column(scale=1):
-            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
-    with gr.Row():
-        with gr.Column(scale=1):
-            with gr.Row():
-                num_inference_steps = gr.Slider(
-                    label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25, scale=1
-                )
-                upscale_factor = gr.Slider(
-                    label="Scale factor (applicable to non-aligned face images)",
-                    minimum=1,
-                    maximum=4,
-                    step=0.1,
-                    value=1,
-                    scale=1
-                )
-                seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1)
-            with gr.Row():
-                randomize_seed = gr.Checkbox(label="Randomize seed", value=True, scale=1)
-                aligned = gr.Checkbox(label="The input is an aligned face image", value=False, scale=1)
+    with gr.Column(scale=1):
+        with gr.Row():
+            input_im = gr.Image(label="Input", type="filepath", show_label=True)
+        with gr.Row():
+            num_inference_steps = gr.Slider(
+                label="Number of Inference Steps", minimum=1, maximum=200, step=1, value=25, scale=1
+            )
+            upscale_factor = gr.Slider(
+                label="Scale factor (applicable to non-aligned face images)",
+                minimum=1,
+                maximum=4,
+                step=0.1,
+                value=1,
+                scale=1,
+            )
+            seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1)
+            randomize_seed = gr.Checkbox(label="Randomize seed", value=True, scale=1)
+            aligned = gr.Checkbox(label="The input is an aligned face image", value=False, scale=1)
+        with gr.Row():
+            with gr.Column(scale=1):
+                run_button = gr.Button(value="Submit", variant="primary")
+            with gr.Column(scale=1):
+                clear_button = gr.ClearButton(value="Clear")
 
-        with gr.Column(scale=1):
+    with gr.Column(scale=1):
+        with gr.Row():
+            result = gr.Image(label="Output", type="numpy", show_label=True, format="png")
+        with gr.Row():
             gallery = gr.Gallery(
                 label="Restored faces gallery", type="numpy", show_label=True, format="png"
             )
