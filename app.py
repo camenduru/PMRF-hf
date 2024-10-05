@@ -148,9 +148,9 @@ def enhance_face(img, face_helper, has_aligned, num_flow_steps, scale=2):
 @torch.inference_mode()
 @spaces.GPU()
 def inference(
+    img,
     seed,
     randomize_seed,
-    img,
     aligned,
     scale,
     num_flow_steps,
@@ -250,16 +250,9 @@ demo = gr.Interface(
     inference,
     [
         gr.Image(label="Input", type="filepath", show_label=True),
+        gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1),
         gr.Checkbox(label="Randomize seed", value=True),
         gr.Checkbox(label="The input is an aligned face image", value=False),
-        gr.Slider(
-            label="Number of Inference Steps",
-            minimum=1,
-            maximum=200,
-            step=1,
-            value=25,
-            scale=1,
-        ),
         gr.Slider(
             label="Scale factor (applicable to non-aligned face images)",
             minimum=1,
@@ -268,7 +261,14 @@ demo = gr.Interface(
             value=1,
             scale=1,
         ),
-        gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=42, scale=1),
+        gr.Slider(
+            label="Number of Inference Steps",
+            minimum=1,
+            maximum=200,
+            step=1,
+            value=25,
+            scale=1,
+        ),
     ],
     [
         gr.Image(label="Output", type="numpy", show_label=True, format="png"),
