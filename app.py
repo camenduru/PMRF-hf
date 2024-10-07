@@ -196,6 +196,11 @@ def inference(
 title = "Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration"
 intro = """
 <h3 style="margin-bottom: 10px; text-align: center;">
+    <a href="https://ohayonguy.github.io/">Guy Ohayon</a>&nbsp;,&nbsp;
+    <a href="https://tomer.net.technion.ac.il/">Tomer Michaeli</a>&nbsp;,&nbsp;
+    <a href="https://elad.cs.technion.ac.il/">Michael Elad</a>
+</h3>
+<h3 style="margin-bottom: 10px; text-align: center;">
     <a href="https://arxiv.org/abs/2410.00418">[Paper]</a>&nbsp;|&nbsp;
     <a href="https://pmrf-ml.github.io/">[Project Page]</a>&nbsp;|&nbsp;
     <a href="https://github.com/ohayonguy/PMRF">[Code]</a>
@@ -204,7 +209,7 @@ intro = """
 Gradio demo for the blind face image restoration version of [Posterior-Mean Rectified Flow: Towards Minimum MSE Photo-Realistic Image Restoration](https://arxiv.org/abs/2410.00418). 
 You may use this demo to enhance the quality of any image which contains faces.
 
-Please refer to our project's page for more details: https://pmrf-ml.github.io/.
+PMRF is a novel photo-realistic image restoration algorithm. It (provably) approximates the optimal estimator that minimizes the Mean Squared Error (MSE) under a perfect perceptual quality constraint. Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
 *Notes* : 
 
@@ -215,7 +220,7 @@ Please refer to our project's page for more details: https://pmrf-ml.github.io/.
 
 article = r"""
 
-If you find our work useful, please help to ⭐ our <a href='https://github.com/ohayonguy/PMRF' target='_blank'>GitHub repository</a>. Thanks! 
+If you find our work useful, please ⭐ our <a href='https://github.com/ohayonguy/PMRF' target='_blank'>GitHub repository</a>. Thanks!
 [![GitHub Stars](https://img.shields.io/github/stars/ohayonguy/PMRF?style=social)](https://github.com/ohayonguy/PMRF)
 
 📝 **Citation**
